@@ -7,13 +7,14 @@
   "license": "MIT",
   "scripts": {
     "lint": "yarn lint:fix && yarn lint:check",
-    "lint:fix": "prettier --config ./.prettierrc.json --write 'test/**/*.ts'",
+    "lint:fix": "prettier --config ./.prettierrc.json --write 'test/**/*.ts' 'load-tests/**/*.ts'",
     "lint:check": "tslint --format stylish --project .",
     "build:integration": "./scripts/build.sh",
     "build:contracts": "hardhat compile",
     "build:contracts:ovm": "hardhat compile --network optimism",
     "test:integration": "hardhat --network optimism test",
     "test:sync": "hardhat --network optimism test sync-tests/*.spec.ts --no-compile",
+    "test:load": "hardhat --network optimism test load-tests/*.spec.ts --no-compile",
     "clean": "rimraf cache artifacts artifacts-ovm cache-ovm"
   },
   "devDependencies": {
