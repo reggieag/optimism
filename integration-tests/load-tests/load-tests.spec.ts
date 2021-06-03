@@ -150,4 +150,88 @@ describe('load tests', () => {
       )
     })
   })
+
+  describe('C-C-C-Combo breakers', () => {
+    const numTransactions = 10
+
+    it(`${numTransactions} L2 transactions, L1 => L2 transactions, L2 => L1 transactions (txs serial, suites parallel)`, async () => {
+      await Promise.all([
+        executeRepeatedL1ToL2Transactions(
+          env,
+          {
+            contract: L2SimpleStorage,
+            functionName: 'setValue',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+        executeRepeatedL2ToL1Transactions(
+          env,
+          {
+            contract: L1SimpleStorage,
+            functionName: 'setValue',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+        executeRepeatedL2Transactions(
+          env,
+          {
+            contract: L2SimpleStorage,
+            functionName: 'setValueNotXDomain',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+      ])
+
+      expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(
+        numTransactions * 2
+      )
+
+      expect((await L1SimpleStorage.totalCount()).toNumber()).to.equal(
+        numTransactions
+      )
+    })
+
+    it(`${numTransactions} L2 transactions, L1 => L2 transactions, L2 => L1 transactions (all parallel)`, async () => {
+      await Promise.all([
+        executeRepeatedL1ToL2TransactionsParallel(
+          env,
+          {
+            contract: L2SimpleStorage,
+            functionName: 'setValue',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+        executeRepeatedL2ToL1TransactionsParallel(
+          env,
+          {
+            contract: L1SimpleStorage,
+            functionName: 'setValue',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+        executeRepeatedL2TransactionsParallel(
+          env,
+          {
+            contract: L2SimpleStorage,
+            functionName: 'setValueNotXDomain',
+            functionParams: [`0x${'42'.repeat(32)}`],
+          },
+          numTransactions
+        ),
+      ])
+
+      expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(
+        numTransactions * 2
+      )
+
+      expect((await L1SimpleStorage.totalCount()).toNumber()).to.equal(
+        numTransactions
+      )
+    })
+  })
 }).timeout(500000)
