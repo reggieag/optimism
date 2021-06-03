@@ -62,7 +62,7 @@ describe('load tests', () => {
       )
     }).timeout(400000)
 
-    it.only(`${numTransactions} L1 => L2 transactions (parallel)`, async () => {
+    it(`${numTransactions} L1 => L2 transactions (parallel)`, async () => {
       await executeRepeatedL1ToL2TransactionsParallel(
         env,
         {
@@ -80,7 +80,7 @@ describe('load tests', () => {
   })
 
   describe('L2 => L1 load tests', () => {
-    const numTransactions = 100
+    const numTransactions = 10
 
     it(`${numTransactions} L2 => L1 transactions (serial)`, async () => {
       await executeRepeatedL2ToL1Transactions(
@@ -116,7 +116,7 @@ describe('load tests', () => {
   })
 
   describe('L2 transaction load tests', () => {
-    const numTransactions = 100
+    const numTransactions = 10
 
     it(`${numTransactions} L2 transactions (serial)`, async () => {
       await executeRepeatedL2Transactions(
