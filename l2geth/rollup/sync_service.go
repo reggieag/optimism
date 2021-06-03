@@ -21,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/ethereum/go-ethereum/eth/gasprice"
+	"github.com/ethereum/go-ethereum/rollup/fees"
 )
 
 // errShortRemoteTip is an error for when the remote tip is shorter than the
@@ -52,7 +53,6 @@ type SyncService struct {
 	syncing                   atomic.Value
 	chainHeadSub              event.Subscription
 	OVMContext                OVMContext
-	confirmationDepth         uint64
 	pollInterval              time.Duration
 	timestampRefreshThreshold time.Duration
 	chainHeadCh               chan core.ChainHeadEvent
@@ -102,7 +102,6 @@ func NewSyncService(ctx context.Context, cfg Config, txpool *core.TxPool, bc *co
 		cancel:                    cancel,
 		verifier:                  cfg.IsVerifier,
 		enable:                    cfg.Eth1SyncServiceEnable,
-		confirmationDepth:         cfg.Eth1ConfirmationDepth,
 		syncing:                   atomic.Value{},
 		bc:                        bc,
 		txpool:                    txpool,
@@ -243,8 +242,12 @@ func (s *SyncService) initializeLatestL1(ctcDeployHeight *big.Int) error {
 		s.SetLatestL1Timestamp(context.Timestamp)
 		s.SetLatestL1BlockNumber(context.BlockNumber)
 	} else {
+		// Prevent underflows
+		if *index != 0 {
+			*index = *index - 1
+		}
 		log.Info("Found latest index", "index", *index)
-		block := s.bc.GetBlockByNumber(*index - 1)
+		block := s.bc.GetBlockByNumber(*index)
 		if block == nil {
 			block = s.bc.CurrentBlock()
 			idx := block.Number().Uint64()
@@ -253,11 +256,12 @@ func (s *SyncService) initializeLatestL1(ctcDeployHeight *big.Int) error {
 				return fmt.Errorf("Current block height greater than index")
 			}
 			s.SetLatestIndex(&idx)
-			log.Info("Block not found, resetting index", "new", idx, "old", *index-1)
+			log.Info("Block not found, resetting index", "new", idx, "old", *index)
 		}
 		txs := block.Transactions()
 		if len(txs) != 1 {
-			log.Error("Unexpected number of transactions in block: %d", len(txs))
+			log.Error("Unexpected number of transactions in block", "count", len(txs))
+			panic("Cannot recover OVM Context")
 		}
 		tx := txs[0]
 		s.SetLatestL1Timestamp(tx.L1Timestamp())
@@ -445,13 +449,7 @@ func (s *SyncService) updateL2GasPrice(hash *common.Hash) error {
 		return err
 	}
 	result := state.GetState(s.gpoAddress, l2GasPriceSlot)
-	gasPrice := result.Big()
-	if err := core.VerifyL2GasPrice(gasPrice); err != nil {
-		gp := core.RoundL2GasPrice(gasPrice)
-		log.Warn("Invalid gas price detected in state", "state", gasPrice, "using", gp)
-		gasPrice = gp
-	}
-	s.RollupGpo.SetL2GasPrice(gasPrice)
+	s.RollupGpo.SetL2GasPrice(result.Big())
 	return nil
 }
 
@@ -728,11 +726,18 @@ func (s *SyncService) applyBatchedTransaction(tx *types.Transaction) error {
 
 // verifyFee will verify that a valid fee is being paid.
 func (s *SyncService) verifyFee(tx *types.Transaction) error {
-	// Exit early if fees are enforced and the gasPrice is set to 0
-	if s.enforceFees && tx.GasPrice().Cmp(common.Big0) == 0 {
-		return errors.New("cannot accept 0 gas price transaction")
+	if tx.GasPrice().Cmp(common.Big0) == 0 {
+		// Exit early if fees are enforced and the gasPrice is set to 0
+		if s.enforceFees {
+			return errors.New("cannot accept 0 gas price transaction")
+		}
+		// If fees are not enforced and the gas price is 0, return early
+		return nil
 	}
-
+	// When the gas price is non zero, it must be equal to the constant
+	if tx.GasPrice().Cmp(fees.BigTxGasPrice) != 0 {
+		return fmt.Errorf("tx.gasPrice must be %d", fees.TxGasPrice)
+	}
 	l1GasPrice, err := s.RollupGpo.SuggestL1GasPrice(context.Background())
 	if err != nil {
 		return err
@@ -743,22 +748,29 @@ func (s *SyncService) verifyFee(tx *types.Transaction) error {
 	}
 	// Calculate the fee based on decoded L2 gas limit
 	gas := new(big.Int).SetUint64(tx.Gas())
-	l2GasLimit := core.DecodeL2GasLimit(gas)
-	fee, err := core.CalculateRollupFee(tx.Data(), l1GasPrice, l2GasLimit, l2GasPrice)
+	l2GasLimit := fees.DecodeL2GasLimit(gas)
+	// Only count the calldata here as the overhead of the fully encoded
+	// RLP transaction is handled inside of EncodeL2GasLimit
+	fee := fees.EncodeTxGasLimit(tx.Data(), l1GasPrice, l2GasLimit, l2GasPrice)
 	if err != nil {
 		return err
-	}
-	// If fees are not enforced and the gas price is 0, return early
-	if !s.enforceFees && tx.GasPrice().Cmp(common.Big0) == 0 {
-		return nil
 	}
 	// This should only happen if the transaction fee is greater than 18.44 ETH
 	if !fee.IsUint64() {
 		return fmt.Errorf("fee overflow: %s", fee.String())
 	}
-	// Make sure that the fee is paid
-	if tx.Gas() < fee.Uint64() {
-		return fmt.Errorf("fee too low: %d, use at least tx.gasLimit = %d and tx.gasPrice = 1", tx.Gas(), fee.Uint64())
+	// Compute the user's fee
+	paying := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
+	// Compute the minimum expected fee
+	expecting := new(big.Int).Mul(fee, fees.BigTxGasPrice)
+	if paying.Cmp(expecting) == -1 {
+		return fmt.Errorf("fee too low: %d, use at least tx.gasLimit = %d and tx.gasPrice = %d", paying, fee.Uint64(), fees.BigTxGasPrice)
+	}
+	// Protect users from overpaying by too much
+	overpaying := new(big.Int).Sub(paying, expecting)
+	threshold := new(big.Int).Mul(expecting, common.Big3)
+	if overpaying.Cmp(threshold) == 1 {
+		return fmt.Errorf("fee too large: %d", paying)
 	}
 	return nil
 }
@@ -776,7 +788,6 @@ func (s *SyncService) ValidateAndApplySequencerTransaction(tx *types.Transaction
 	if err := s.verifyFee(tx); err != nil {
 		return err
 	}
-
 	s.txLock.Lock()
 	defer s.txLock.Unlock()
 	log.Trace("Sequencer transaction validation", "hash", tx.Hash().Hex())

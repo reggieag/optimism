@@ -69,7 +69,7 @@ type transaction struct {
 	BlockNumber uint64          `json:"blockNumber"`
 	Timestamp   uint64          `json:"timestamp"`
 	Value       hexutil.Uint64  `json:"value"`
-	GasLimit    uint64          `json:"gasLimit"`
+	GasLimit    uint64          `json:"gasLimit,string"`
 	Target      common.Address  `json:"target"`
 	Origin      *common.Address `json:"origin"`
 	Data        hexutil.Bytes   `json:"data"`
@@ -84,7 +84,7 @@ type Enqueue struct {
 	Index       *uint64         `json:"ctcIndex"`
 	Target      *common.Address `json:"target"`
 	Data        *hexutil.Bytes  `json:"data"`
-	GasLimit    *uint64         `json:"gasLimit"`
+	GasLimit    *uint64         `json:"gasLimit,string"`
 	Origin      *common.Address `json:"origin"`
 	BlockNumber *uint64         `json:"blockNumber"`
 	Timestamp   *uint64         `json:"timestamp"`
@@ -104,7 +104,7 @@ type signature struct {
 type decoded struct {
 	Signature signature       `json:"sig"`
 	Value     hexutil.Uint64  `json:"value"`
-	GasLimit  uint64          `json:"gasLimit"`
+	GasLimit  uint64          `json:"gasLimit,string"`
 	GasPrice  uint64          `json:"gasPrice"`
 	Nonce     uint64          `json:"nonce"`
 	Target    *common.Address `json:"target"`
@@ -570,7 +570,7 @@ func (c *Client) GetTransactionBatch(index uint64) (*Batch, []*types.Transaction
 		Get("/batch/transaction/index/{index}")
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("Cannot get transaction batch %d", index)
+		return nil, nil, fmt.Errorf("Cannot get transaction batch %d: %w", index, err)
 	}
 	txBatch, ok := response.Result().(*TransactionBatchResponse)
 	if !ok {
