@@ -60,7 +60,7 @@ describe('load tests', () => {
       expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(
         numTransactions
       )
-    }).timeout(400000)
+    })
 
     it(`${numTransactions} L1 => L2 transactions (parallel)`, async () => {
       await executeRepeatedL1ToL2TransactionsParallel(
@@ -76,7 +76,7 @@ describe('load tests', () => {
       expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(
         numTransactions
       )
-    }).timeout(400000)
+    })
   })
 
   describe('L2 => L1 load tests', () => {
@@ -96,7 +96,7 @@ describe('load tests', () => {
       expect((await L1SimpleStorage.totalCount()).toNumber()).to.equal(
         numTransactions
       )
-    }).timeout(400000)
+    })
 
     it(`${numTransactions} L2 => L1 transactions (parallel)`, async () => {
       await executeRepeatedL2ToL1TransactionsParallel(
@@ -112,7 +112,7 @@ describe('load tests', () => {
       expect((await L1SimpleStorage.totalCount()).toNumber()).to.equal(
         numTransactions
       )
-    }).timeout(400000)
+    })
   })
 
   describe('L2 transaction load tests', () => {
@@ -150,4 +150,4 @@ describe('load tests', () => {
       )
     })
   })
-})
+}).timeout(500000)
