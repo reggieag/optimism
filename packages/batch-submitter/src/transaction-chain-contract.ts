@@ -11,6 +11,7 @@ import {
   BatchContext,
   encodeAppendSequencerBatch,
   encodeHex,
+  remove0x,
 } from '@eth-optimism/core-utils'
 
 export { encodeAppendSequencerBatch, BatchContext, AppendSequencerBatchParams }
@@ -22,8 +23,7 @@ export { encodeAppendSequencerBatch, BatchContext, AppendSequencerBatchParams }
 export class CanonicalTransactionChainContract extends Contract {
   public customPopulateTransaction = {
     appendSequencerBatch: async (
-      batch: AppendSequencerBatchParams,
-      options?: TransactionRequest
+      batch: AppendSequencerBatchParams
     ): Promise<ethers.PopulatedTransaction> => {
       const nonce = await this.signer.getTransactionCount()
       const to = this.address
@@ -74,7 +74,7 @@ const getEncodedCalldata = (batch: AppendSequencerBatchParams): string => {
     Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
   ).slice(2, 10)
   const calldata = encodeAppendSequencerBatch(batch)
-  return '0x' + methodId + calldata
+  return '0x' + remove0x(methodId) + remove0x(calldata)
 }
 
 const encodeBatchContext = (context: BatchContext): string => {

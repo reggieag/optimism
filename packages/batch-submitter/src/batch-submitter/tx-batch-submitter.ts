@@ -139,23 +139,20 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
-        const nonce = await this.signer.getTransactionCount()
         // Generate the transaction we will repeatedly submit
         const tx = await this.chainContract.populateTransaction.appendQueueBatch(
-          99999999
+          ethers.constants.MaxUint256 // Completely empty the queue by appending (up to) an enormous number of queue elements.
         )
         const contractFunction = async (
           gasPrice
         ): Promise<TransactionReceipt> => {
           this.logger.info('Submitting appendQueueBatch transaction', {
             gasPrice,
-            nonce,
             contractAddr: this.chainContract.address,
           })
           const txResponse = await this.chainContract.appendQueueBatch(
-            99999999,
+            ethers.constants.MaxUint256, // Completely empty the queue by appending (up to) an enormous number of queue elements.
             {
-              nonce,
               gasPrice,
             }
           )
@@ -258,7 +255,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       l1tipHeight,
     })
 
-    const nonce = await this.signer.getTransactionCount()
     // Generate the transaction we will repeatedly submit
     const tx = await this.chainContract.customPopulateTransaction.appendSequencerBatch(
       batchParams
@@ -266,12 +262,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       this.logger.info('Submitting appendSequencerBatch transaction', {
         gasPrice,
-        nonce,
         contractAddr: this.chainContract.address,
       })
       const txResponse = await this.signer.sendTransaction({
         ...tx,
-        nonce,
         gasPrice,
       })
       this.logger.info('Submitted appendSequencerBatch transaction', {

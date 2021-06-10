@@ -176,7 +176,6 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const offsetStartsAtIndex = startBlock - this.blockOffset
     this.logger.debug('Submitting batch.', { calldata })
 
-    const nonce = await this.signer.getTransactionCount()
     // Generate the transaction we will repeatedly submit
     const tx = await this.chainContract.populateTransaction.appendStateBatch(
       batch,
@@ -185,12 +184,10 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       this.logger.info('Submitting appendStateBatch transaction', {
         gasPrice,
-        nonce,
         contractAddr: this.chainContract.address,
       })
       const txResponse = await this.signer.sendTransaction({
         ...tx,
-        nonce,
         gasPrice,
       })
       this.logger.info('Submitted appendStateBatch transaction', {
