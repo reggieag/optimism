@@ -48,7 +48,7 @@ describe('Basic L1<>L2 Communication', async () => {
     await L2Reverter.deployTransaction.wait()
   })
 
-  describe('L2 => L1', () => {
+  describe.skip('L2 => L1', () => {
     it('should be able to perform a withdrawal from L2 -> L1', async () => {
       const value = `0x${'77'.repeat(32)}`
 

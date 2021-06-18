@@ -132,10 +132,9 @@ describe('Basic RPC tests', () => {
         gasPrice: TxGasPrice,
       }
       const fee = tx.gasPrice.mul(tx.gasLimit)
-      const gasLimit = 5920001
 
       await expect(env.l2Wallet.sendTransaction(tx)).to.be.rejectedWith(
-        `fee too low: ${fee}, use at least tx.gasLimit = ${gasLimit} and tx.gasPrice = ${TxGasPrice.toString()}`
+        `fee too low: ${fee}, use at least tx.gasLimit =`
       )
     })
 
@@ -319,7 +318,8 @@ describe('Basic RPC tests', () => {
     // canonical transaction chain. This test catches this by
     // querying for the latest block and then waits and then queries
     // the latest block again and then asserts that they are the same.
-    it('should return the same result when new transactions are not applied', async () => {
+    // SKIP: FAILS IF OTHER TXS ARE BEING APPLIED BY ANOTHER PROCESS
+    it.skip('should return the same result when new transactions are not applied', async () => {
       // Get latest block once to start.
       const prev = await provider.getBlockWithTransactions('latest')
 
@@ -343,7 +343,7 @@ describe('Basic RPC tests', () => {
   describe('eth_chainId', () => {
     it('should get the correct chainid', async () => {
       const { chainId } = await provider.getNetwork()
-      expect(chainId).to.be.eq(420)
+      expect(chainId).to.be.eq(69)
     })
   })
 

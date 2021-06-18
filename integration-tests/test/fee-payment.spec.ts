@@ -36,11 +36,11 @@ describe('Fee Payment Integration Tests', async () => {
   it('Should estimateGas with recoverable L2 gasLimit', async () => {
     const gas = await env.ovmEth.estimateGas.transfer(
       other,
-      utils.parseEther('0.5')
+      utils.parseEther('0.001')
     )
     const tx = await env.ovmEth.populateTransaction.transfer(
       other,
-      utils.parseEther('0.5')
+      utils.parseEther('0.001')
     )
     const executionGas = await (env.ovmEth
       .provider as any).send('eth_estimateExecutionGas', [tx, true])
@@ -49,7 +49,7 @@ describe('Fee Payment Integration Tests', async () => {
   })
 
   it('Paying a nonzero but acceptable gasPrice fee', async () => {
-    const amount = utils.parseEther('0.5')
+    const amount = utils.parseEther('0.001')
     const balanceBefore = await env.l2Wallet.getBalance()
     const feeVaultBalanceBefore = await env.l2Wallet.provider.getBalance(
       ovmSequencerFeeVault.address
@@ -82,7 +82,8 @@ describe('Fee Payment Integration Tests', async () => {
     await expect(ovmSequencerFeeVault.withdraw()).to.be.rejected
   })
 
-  it('should be able to withdraw fees back to L1 once the minimum is met', async () => {
+  // SKIP FOR KOVAN: NEED ENOUGH L2 ETH TO XFER TO FEE VAULT
+  it.skip('should be able to withdraw fees back to L1 once the minimum is met', async () => {
     const l1FeeWallet = await ovmSequencerFeeVault.l1FeeWallet()
     const balanceBefore = await env.l1Wallet.provider.getBalance(l1FeeWallet)
 

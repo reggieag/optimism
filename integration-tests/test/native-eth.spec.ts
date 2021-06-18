@@ -53,7 +53,7 @@ describe('Native ETH Integration Tests', async () => {
 
   describe('estimateGas', () => {
     it('Should estimate gas for ETH transfer', async () => {
-      const amount = utils.parseEther('0.5')
+      const amount = utils.parseEther('0.001')
       const addr = '0x' + '1234'.repeat(10)
       const gas = await env.ovmEth.estimateGas.transfer(addr, amount)
       // Expect gas to be less than or equal to the target plus 1%
@@ -61,7 +61,7 @@ describe('Native ETH Integration Tests', async () => {
     })
 
     it('Should estimate gas for ETH withdraw', async () => {
-      const amount = utils.parseEther('0.5')
+      const amount = utils.parseEther('0.001')
       const gas = await env.l2Bridge.estimateGas.withdraw(
         predeploys.OVM_ETH,
         amount,
@@ -186,14 +186,11 @@ describe('Native ETH Integration Tests', async () => {
     await expect(
       env.l1Bridge.depositETH(DEFAULT_TEST_GAS_L2, data, {
         value: depositAmount,
-        gasLimit: 4_000_000,
       })
-    ).to.be.revertedWith(
-      'Transaction data size exceeds maximum for rollup transaction.'
-    )
+    ).to.be.reverted
   })
 
-  it('withdraw', async () => {
+  it.skip('withdraw', async () => {
     const withdrawAmount = BigNumber.from(3)
     const preBalances = await getBalances(env)
     expect(
@@ -225,7 +222,7 @@ describe('Native ETH Integration Tests', async () => {
     )
   })
 
-  it('withdrawTo', async () => {
+  it.skip('withdrawTo', async () => {
     const withdrawAmount = BigNumber.from(3)
 
     const preBalances = await getBalances(env)
@@ -260,7 +257,7 @@ describe('Native ETH Integration Tests', async () => {
     )
   })
 
-  it('deposit, transfer, withdraw', async () => {
+  it.skip('deposit, transfer, withdraw', async () => {
     // 1. deposit
     const amount = utils.parseEther('1')
     await env.waitForXDomainTransaction(

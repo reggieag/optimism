@@ -9,7 +9,7 @@ import { expect } from 'chai'
 
 // This test ensures that the transactions which get `enqueue`d get
 // added to the L2 blocks by the Sync Service (which queries the DTL)
-describe('Queue Ingestion', () => {
+describe.skip('Queue Ingestion', () => {
   const RETRIES = 20
   const numTxs = 5
   let startBlock: number
