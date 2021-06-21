@@ -100,7 +100,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
     }
   })
 
-  it('should set correct OVM Context for `eth_call`', async () => {
+  it.skip('should set correct OVM Context for `eth_call`', async () => {
     const tip = await L2Provider.getBlockWithTransactions('latest')
     const start = Math.max(0, tip.number - 5)
 
