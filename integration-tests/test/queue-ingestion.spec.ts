@@ -1,6 +1,6 @@
 /* Imports: Internal */
 import { injectL2Context } from '@eth-optimism/core-utils'
-import { sleep, skipIfNotLocal } from './shared/utils'
+import { sleep, L2_NETWORK_NAME } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 
 /* Imports: External */
@@ -9,8 +9,10 @@ import { expect } from 'chai'
 
 // This test ensures that the transactions which get `enqueue`d get
 // added to the L2 blocks by the Sync Service (which queries the DTL)
-// Needs to be skipped on Kovan, not exactly sure why.
-skipIfNotLocal(describe)('Queue Ingestion', () => {
+//
+// Needs to be skipped on Prod networks because it makes several decisions
+// based on the assumption that no other transactions are being ingested.
+describe.skip('Queue Ingestion', () => {
   const RETRIES = 20
   const numTxs = 5
   let startBlock: number

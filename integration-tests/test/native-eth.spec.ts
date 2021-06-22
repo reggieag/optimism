@@ -8,7 +8,7 @@ import {
   expectApprox,
   fundUser,
   PROXY_SEQUENCER_ENTRYPOINT_ADDRESS,
-  skipIfNotLocal,
+  L2_NETWORK_NAME,
 } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 
@@ -192,7 +192,11 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  skipIfNotLocal(it)('withdraw', async () => {
+  it('withdraw', async function() {
+    if (L2_NETWORK_NAME !== 'local') {
+      this.skip()
+    }
+
     const withdrawAmount = BigNumber.from(3)
     const preBalances = await getBalances(env)
     expect(
@@ -225,7 +229,11 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  skipIfNotLocal(it)('withdrawTo', async () => {
+  it('withdrawTo', async function() {
+    if (L2_NETWORK_NAME !== 'local') {
+      this.skip()
+    }
+
     const withdrawAmount = BigNumber.from(3)
 
     const preBalances = await getBalances(env)
@@ -261,7 +269,11 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  skipIfNotLocal(it)('deposit, transfer, withdraw', async () => {
+  it('deposit, transfer, withdraw', async function() {
+    if (L2_NETWORK_NAME !== 'local') {
+      this.skip()
+    }
+
     // 1. deposit
     const amount = utils.parseEther('1')
     await env.waitForXDomainTransaction(

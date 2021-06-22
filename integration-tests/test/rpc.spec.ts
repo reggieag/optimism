@@ -13,7 +13,7 @@ import {
   fundUser,
   expectApprox,
   L2_CHAINID,
-  skipIfNotLocal,
+  L2_NETWORK_NAME,
 } from './shared/utils'
 import chaiAsPromised from 'chai-as-promised'
 import { OptimismEnv } from './shared/env'
@@ -319,22 +319,24 @@ describe('Basic RPC tests', () => {
     // canonical transaction chain. This test catches this by
     // querying for the latest block and then waits and then queries
     // the latest block again and then asserts that they are the same.
-    // Needs to be skipped on Kovan because this test doesn't work when other people are sending
-    // transactions to the Sequencer at the same time as this test is running.
-    skipIfNotLocal(it)(
-      'should return the same result when new transactions are not applied',
-      async () => {
-        // Get latest block once to start.
-        const prev = await provider.getBlockWithTransactions('latest')
-
-        // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
-        for (let i = 0; i < 5; i++) {
-          const latest = await provider.getBlockWithTransactions('latest')
-          expect(latest).to.deep.equal(prev)
-          await sleep(2000)
-        }
+    //
+    // Needs to be skipped on Prod networks because this test doesn't work when
+    // other people are sending transactions to the Sequencer at the same time
+    // as this test is running.
+    it('should return the same result when new transactions are not applied', async function() {
+      if (L2_NETWORK_NAME !== 'local') {
+        this.skip()
       }
-    )
+      // Get latest block once to start.
+      const prev = await provider.getBlockWithTransactions('latest')
+
+      // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
+      for (let i = 0; i < 5; i++) {
+        const latest = await provider.getBlockWithTransactions('latest')
+        expect(latest).to.deep.equal(prev)
+        await sleep(2000)
+      }
+    })
   })
 
   describe('eth_getBalance', () => {

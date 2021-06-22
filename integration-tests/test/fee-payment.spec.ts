@@ -8,7 +8,7 @@ import { TxGasLimit, TxGasPrice } from '@eth-optimism/core-utils'
 import { predeploys, getContractInterface } from '@eth-optimism/contracts'
 
 /* Imports: Internal */
-import { skipIfNotLocal } from './shared/utils'
+import { L2_NETWORK_NAME } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 import { Direction } from './shared/watcher-utils'
 
@@ -85,35 +85,36 @@ describe('Fee Payment Integration Tests', async () => {
 
   // Needs to be skipped on Kovan because the user needs to send a bunch of ETH to the
   // l1 fee wallet in order for the withdrawal to execute correctly.
-  skipIfNotLocal(it)(
-    'should be able to withdraw fees back to L1 once the minimum is met',
-    async () => {
-      const l1FeeWallet = await ovmSequencerFeeVault.l1FeeWallet()
-      const balanceBefore = await env.l1Wallet.provider.getBalance(l1FeeWallet)
-
-      // Transfer the minimum required to withdraw.
-      await env.ovmEth.transfer(
-        ovmSequencerFeeVault.address,
-        await ovmSequencerFeeVault.MIN_WITHDRAWAL_AMOUNT()
-      )
-
-      const vaultBalance = await env.ovmEth.balanceOf(
-        ovmSequencerFeeVault.address
-      )
-
-      // Submit the withdrawal.
-      const withdrawTx = await ovmSequencerFeeVault.withdraw({
-        gasPrice: 0, // Need a gasprice of 0 or the balances will include the fee paid during this tx.
-      })
-
-      // Wait for the withdrawal to be relayed to L1.
-      await env.waitForXDomainTransaction(withdrawTx, Direction.L2ToL1)
-
-      // Balance difference should be equal to old L2 balance.
-      const balanceAfter = await env.l1Wallet.provider.getBalance(l1FeeWallet)
-      expect(balanceAfter.sub(balanceBefore)).to.deep.equal(
-        BigNumber.from(vaultBalance)
-      )
+  it('should be able to withdraw fees back to L1 once the minimum is met', async function() {
+    if (L2_NETWORK_NAME !== 'local') {
+      this.skip()
     }
-  )
+
+    const l1FeeWallet = await ovmSequencerFeeVault.l1FeeWallet()
+    const balanceBefore = await env.l1Wallet.provider.getBalance(l1FeeWallet)
+
+    // Transfer the minimum required to withdraw.
+    await env.ovmEth.transfer(
+      ovmSequencerFeeVault.address,
+      await ovmSequencerFeeVault.MIN_WITHDRAWAL_AMOUNT()
+    )
+
+    const vaultBalance = await env.ovmEth.balanceOf(
+      ovmSequencerFeeVault.address
+    )
+
+    // Submit the withdrawal.
+    const withdrawTx = await ovmSequencerFeeVault.withdraw({
+      gasPrice: 0, // Need a gasprice of 0 or the balances will include the fee paid during this tx.
+    })
+
+    // Wait for the withdrawal to be relayed to L1.
+    await env.waitForXDomainTransaction(withdrawTx, Direction.L2ToL1)
+
+    // Balance difference should be equal to old L2 balance.
+    const balanceAfter = await env.l1Wallet.provider.getBalance(l1FeeWallet)
+    expect(balanceAfter.sub(balanceBefore)).to.deep.equal(
+      BigNumber.from(vaultBalance)
+    )
+  })
 })

@@ -69,14 +69,6 @@ export const OVM_ETH_ADDRESS = predeploys.OVM_ETH
 export const L2_CHAINID = env.L2_CHAINID
 export const L2_NETWORK_NAME = env.L2_NETWORK_NAME
 
-export const skipIfNotLocal = (testfn: { skip: any }): any => {
-  if (L2_NETWORK_NAME === 'local') {
-    return testfn
-  } else {
-    return testfn.skip
-  }
-}
-
 export const getAddressManager = (provider: any) => {
   return getContractFactory('Lib_AddressManager')
     .connect(provider)
