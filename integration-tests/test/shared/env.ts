@@ -141,8 +141,7 @@ export class OptimismEnv {
       }
     }
 
-    for (let i = 0; i < messagePairs.length; i++) {
-      const { message, proof } = messagePairs[i]
+    for (const { message, proof } of messagePairs) {
       while (true) {
         try {
           const result = await this.l1Messenger

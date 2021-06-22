@@ -91,7 +91,7 @@ describe('Fee Payment Integration Tests', async () => {
     const l2WalletBalance = await env.l2Wallet.getBalance()
     if (L2_NETWORK_NAME !== 'local' && l2WalletBalance.lt(withdrawalAmount)) {
       console.log(
-        `must have at least ${ethers.utils.formatEther(
+        `NOTICE: must have at least ${ethers.utils.formatEther(
           withdrawalAmount
         )} ETH on L2 to execute this test, skipping`
       )
