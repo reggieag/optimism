@@ -193,7 +193,7 @@ describe('Native ETH Integration Tests', async () => {
     ).to.be.reverted
   })
 
-  it.only('withdraw', async function() {
+  it('withdraw', async function() {
     await useDynamicTimeoutForWithdrawals(this, env)
 
     const withdrawAmount = BigNumber.from(3)
@@ -237,7 +237,6 @@ describe('Native ETH Integration Tests', async () => {
     )
   })
 
-  // Needs to be skiped on kovan because withdrawals take too long.
   it('withdrawTo', async function() {
     await useDynamicTimeoutForWithdrawals(this, env)
 
@@ -278,7 +277,6 @@ describe('Native ETH Integration Tests', async () => {
     )
   })
 
-  // Needs to be skiped on kovan because withdrawals take too long.
   it('deposit, transfer, withdraw', async function() {
     await useDynamicTimeoutForWithdrawals(this, env)
 

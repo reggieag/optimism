@@ -83,8 +83,6 @@ describe('Fee Payment Integration Tests', async () => {
     await expect(ovmSequencerFeeVault.withdraw()).to.be.rejected
   })
 
-  // Needs to be skipped on Kovan because the user needs to send a bunch of ETH to the
-  // l1 fee wallet in order for the withdrawal to execute correctly.
   it('should be able to withdraw fees back to L1 once the minimum is met', async function() {
     const l1FeeWallet = await ovmSequencerFeeVault.l1FeeWallet()
     const balanceBefore = await env.l1Wallet.provider.getBalance(l1FeeWallet)
