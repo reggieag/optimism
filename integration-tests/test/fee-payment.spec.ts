@@ -37,11 +37,11 @@ describe('Fee Payment Integration Tests', async () => {
   it('Should estimateGas with recoverable L2 gasLimit', async () => {
     const gas = await env.ovmEth.estimateGas.transfer(
       other,
-      utils.parseEther('0.001')
+      utils.parseEther('0.0000001')
     )
     const tx = await env.ovmEth.populateTransaction.transfer(
       other,
-      utils.parseEther('0.001')
+      utils.parseEther('0.0000001')
     )
     const executionGas = await (env.ovmEth
       .provider as any).send('eth_estimateExecutionGas', [tx, true])
@@ -50,7 +50,7 @@ describe('Fee Payment Integration Tests', async () => {
   })
 
   it('Paying a nonzero but acceptable gasPrice fee', async () => {
-    const amount = utils.parseEther('0.001')
+    const amount = utils.parseEther('0.0000001')
     const balanceBefore = await env.l2Wallet.getBalance()
     const feeVaultBalanceBefore = await env.l2Wallet.provider.getBalance(
       ovmSequencerFeeVault.address

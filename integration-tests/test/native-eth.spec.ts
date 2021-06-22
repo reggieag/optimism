@@ -56,7 +56,7 @@ describe('Native ETH Integration Tests', async () => {
 
   describe('estimateGas', () => {
     it('Should estimate gas for ETH transfer', async () => {
-      const amount = utils.parseEther('0.001')
+      const amount = utils.parseEther('0.0000001')
       const addr = '0x' + '1234'.repeat(10)
       const gas = await env.ovmEth.estimateGas.transfer(addr, amount)
       // Expect gas to be less than or equal to the target plus 1%
@@ -64,7 +64,7 @@ describe('Native ETH Integration Tests', async () => {
     })
 
     it('Should estimate gas for ETH withdraw', async () => {
-      const amount = utils.parseEther('0.001')
+      const amount = utils.parseEther('0.0000001')
       const gas = await env.l2Bridge.estimateGas.withdraw(
         predeploys.OVM_ETH,
         amount,
