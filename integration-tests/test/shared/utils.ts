@@ -1,13 +1,6 @@
 import { expect } from 'chai'
 
-import { Direction, waitForXDomainTransaction } from './watcher-utils'
-
-import {
-  getContractFactory,
-  getContractInterface,
-  predeploys,
-} from '@eth-optimism/contracts'
-import { injectL2Context, remove0x, Watcher } from '@eth-optimism/core-utils'
+/* Imports: External */
 import {
   Contract,
   Wallet,
@@ -17,9 +10,23 @@ import {
   BigNumber,
   utils,
 } from 'ethers'
+import {
+  getContractFactory,
+  getContractInterface,
+  predeploys,
+} from '@eth-optimism/contracts'
+import { injectL2Context, remove0x, Watcher } from '@eth-optimism/core-utils'
 import { cleanEnv, str, num, bool } from 'envalid'
+import dotenv from 'dotenv'
+
+/* Imports: Internal */
+import { Direction, waitForXDomainTransaction } from './watcher-utils'
 
 export const GWEI = BigNumber.from(1e9)
+
+if (process.env.IS_PROD_NETWORK === 'true') {
+  dotenv.config()
+}
 
 const env = cleanEnv(process.env, {
   L1_URL: str({ default: 'http://localhost:9545' }),
