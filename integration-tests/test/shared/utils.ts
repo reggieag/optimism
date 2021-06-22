@@ -17,7 +17,7 @@ import {
   BigNumber,
   utils,
 } from 'ethers'
-import { cleanEnv, str, num } from 'envalid'
+import { cleanEnv, str, num, bool } from 'envalid'
 
 export const GWEI = BigNumber.from(1e9)
 
@@ -38,7 +38,7 @@ const env = cleanEnv(process.env, {
     default: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
   }),
   L2_CHAINID: num({ default: 420 }),
-  L2_NETWORK_NAME: str({ default: 'local' }),
+  IS_PROD_NETWORK: bool({ default: false }),
 })
 
 // The hardhat instance
@@ -67,7 +67,7 @@ export const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS =
 export const OVM_ETH_ADDRESS = predeploys.OVM_ETH
 
 export const L2_CHAINID = env.L2_CHAINID
-export const L2_NETWORK_NAME = env.L2_NETWORK_NAME
+export const IS_PROD_NETWORK = env.IS_PROD_NETWORK
 
 export const getAddressManager = (provider: any) => {
   return getContractFactory('Lib_AddressManager')

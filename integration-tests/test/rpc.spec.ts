@@ -13,7 +13,7 @@ import {
   fundUser,
   expectApprox,
   L2_CHAINID,
-  L2_NETWORK_NAME,
+  IS_PROD_NETWORK,
 } from './shared/utils'
 import chaiAsPromised from 'chai-as-promised'
 import { OptimismEnv } from './shared/env'
@@ -324,9 +324,10 @@ describe('Basic RPC tests', () => {
     // other people are sending transactions to the Sequencer at the same time
     // as this test is running.
     it('should return the same result when new transactions are not applied', async function() {
-      if (L2_NETWORK_NAME !== 'local') {
+      if (IS_PROD_NETWORK) {
         this.skip()
       }
+
       // Get latest block once to start.
       const prev = await provider.getBlockWithTransactions('latest')
 

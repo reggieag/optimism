@@ -16,7 +16,7 @@ import {
   getOvmEth,
   getL1Bridge,
   getL2Bridge,
-  L2_NETWORK_NAME,
+  IS_PROD_NETWORK,
   sleep,
 } from './utils'
 import {
@@ -171,7 +171,7 @@ export const useDynamicTimeoutForWithdrawals = async (
   testctx: any,
   env: OptimismEnv
 ) => {
-  if (L2_NETWORK_NAME === 'local') {
+  if (!IS_PROD_NETWORK) {
     return
   }
 

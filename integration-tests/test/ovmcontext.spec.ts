@@ -6,7 +6,7 @@ import { injectL2Context } from '@eth-optimism/core-utils'
 import { Contract, BigNumber } from 'ethers'
 
 /* Imports: Internal */
-import { l2Provider, l1Provider, L2_NETWORK_NAME } from './shared/utils'
+import { l2Provider, l1Provider, IS_PROD_NETWORK } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 import { Direction } from './shared/watcher-utils'
 
@@ -67,8 +67,8 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   })
 
   it('should set correct OVM Context for `eth_call`', async function() {
-    if (L2_NETWORK_NAME !== 'local') {
-      // Needs to be skipped on kovan, unclear why.
+    if (IS_PROD_NETWORK) {
+      // Needs to be skipped on prod networks, unclear why. Seems related to `blockTag: i` below.
       this.skip()
     }
 

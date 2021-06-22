@@ -8,7 +8,7 @@ import { TxGasLimit, TxGasPrice } from '@eth-optimism/core-utils'
 import { predeploys, getContractInterface } from '@eth-optimism/contracts'
 
 /* Imports: Internal */
-import { L2_NETWORK_NAME } from './shared/utils'
+import { IS_PROD_NETWORK } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 import { Direction } from './shared/watcher-utils'
 
@@ -89,7 +89,7 @@ describe('Fee Payment Integration Tests', async () => {
     const withdrawalAmount = await ovmSequencerFeeVault.MIN_WITHDRAWAL_AMOUNT()
 
     const l2WalletBalance = await env.l2Wallet.getBalance()
-    if (L2_NETWORK_NAME !== 'local' && l2WalletBalance.lt(withdrawalAmount)) {
+    if (IS_PROD_NETWORK && l2WalletBalance.lt(withdrawalAmount)) {
       console.log(
         `NOTICE: must have at least ${ethers.utils.formatEther(
           withdrawalAmount
