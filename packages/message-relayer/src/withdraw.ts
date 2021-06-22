@@ -46,7 +46,7 @@ const main = async () => {
 
   console.log(`found ${messagePairs.length} messages`)
   for (let i = 0; i < messagePairs.length; i++) {
-    console.log(`relaying message ${i}/${messagePairs.length}`)
+    console.log(`relaying message ${i+1}/${messagePairs.length}`)
     const { message, proof } = messagePairs[i]
     const result = await l1CrossDomainMessenger.relayMessage(
       message.target,
@@ -56,7 +56,7 @@ const main = async () => {
       proof
     )
     await result.wait()
-    console.log(`relayed message ${i}/${messagePairs.length}`)
+    console.log(`relayed message ${i+1}/${messagePairs.length}! L1 tx hash: ${result.hash}`)
   }
 } 
 
