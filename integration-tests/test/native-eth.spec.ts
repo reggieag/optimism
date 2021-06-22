@@ -8,7 +8,7 @@ import {
   expectApprox,
   fundUser,
   PROXY_SEQUENCER_ENTRYPOINT_ADDRESS,
-  L2_NETWORK_NAME,
+  skipIfNotLocal,
 } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 
@@ -192,7 +192,7 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)('withdraw', async () => {
+  skipIfNotLocal(it)('withdraw', async () => {
     const withdrawAmount = BigNumber.from(3)
     const preBalances = await getBalances(env)
     expect(
@@ -225,7 +225,7 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)('withdrawTo', async () => {
+  skipIfNotLocal(it)('withdrawTo', async () => {
     const withdrawAmount = BigNumber.from(3)
 
     const preBalances = await getBalances(env)
@@ -261,52 +261,49 @@ describe('Native ETH Integration Tests', async () => {
   })
 
   // Needs to be skiped on kovan because withdrawals take too long.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
-    'deposit, transfer, withdraw',
-    async () => {
-      // 1. deposit
-      const amount = utils.parseEther('1')
-      await env.waitForXDomainTransaction(
-        env.l1Bridge.depositETH(DEFAULT_TEST_GAS_L2, '0xFFFF', {
-          value: amount,
-          gasLimit: DEFAULT_TEST_GAS_L1,
-        }),
-        Direction.L1ToL2
-      )
+  skipIfNotLocal(it)('deposit, transfer, withdraw', async () => {
+    // 1. deposit
+    const amount = utils.parseEther('1')
+    await env.waitForXDomainTransaction(
+      env.l1Bridge.depositETH(DEFAULT_TEST_GAS_L2, '0xFFFF', {
+        value: amount,
+        gasLimit: DEFAULT_TEST_GAS_L1,
+      }),
+      Direction.L1ToL2
+    )
 
-      // 2. trnsfer to another address
-      const other = Wallet.createRandom().connect(env.l2Wallet.provider)
-      const tx = await env.ovmEth.transfer(other.address, amount)
-      await tx.wait()
+    // 2. trnsfer to another address
+    const other = Wallet.createRandom().connect(env.l2Wallet.provider)
+    const tx = await env.ovmEth.transfer(other.address, amount)
+    await tx.wait()
 
-      const l1BalanceBefore = await other
-        .connect(env.l1Wallet.provider)
-        .getBalance()
+    const l1BalanceBefore = await other
+      .connect(env.l1Wallet.provider)
+      .getBalance()
 
-      // 3. do withdrawal
-      const withdrawnAmount = utils.parseEther('0.95')
-      const receipts = await env.waitForXDomainTransaction(
-        env.l2Bridge
-          .connect(other)
-          .withdraw(
-            predeploys.OVM_ETH,
-            withdrawnAmount,
-            DEFAULT_TEST_GAS_L1,
-            '0xFFFF'
-          ),
-        Direction.L2ToL1
-      )
+    // 3. do withdrawal
+    const withdrawnAmount = utils.parseEther('0.95')
+    const receipts = await env.waitForXDomainTransaction(
+      env.l2Bridge
+        .connect(other)
+        .withdraw(
+          predeploys.OVM_ETH,
+          withdrawnAmount,
+          DEFAULT_TEST_GAS_L1,
+          '0xFFFF'
+        ),
+      Direction.L2ToL1
+    )
 
-      // check that correct amount was withdrawn and that fee was charged
-      const fee = receipts.tx.gasLimit.mul(receipts.tx.gasPrice)
-      const l1BalanceAfter = await other
-        .connect(env.l1Wallet.provider)
-        .getBalance()
-      const l2BalanceAfter = await other.getBalance()
-      expect(l1BalanceAfter).to.deep.eq(l1BalanceBefore.add(withdrawnAmount))
-      expect(l2BalanceAfter).to.deep.eq(amount.sub(withdrawnAmount).sub(fee))
-    }
-  )
+    // check that correct amount was withdrawn and that fee was charged
+    const fee = receipts.tx.gasLimit.mul(receipts.tx.gasPrice)
+    const l1BalanceAfter = await other
+      .connect(env.l1Wallet.provider)
+      .getBalance()
+    const l2BalanceAfter = await other.getBalance()
+    expect(l1BalanceAfter).to.deep.eq(l1BalanceBefore.add(withdrawnAmount))
+    expect(l2BalanceAfter).to.deep.eq(amount.sub(withdrawnAmount).sub(fee))
+  })
 
   describe('WETH9 functionality', async () => {
     let initialBalance: BigNumber

@@ -1,10 +1,10 @@
 import { ethers } from 'hardhat'
 import { injectL2Context } from '@eth-optimism/core-utils'
 import { expect } from 'chai'
-import { sleep, l2Provider, l1Provider, L2_NETWORK_NAME } from './shared/utils'
+import { sleep, l2Provider, l1Provider, skipIfNotLocal } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Contract, ContractFactory, Wallet, BigNumber } from 'ethers'
+import { Contract, BigNumber } from 'ethers'
 
 /**
  * These tests cover the OVM execution contexts. In the OVM execution
@@ -58,7 +58,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   })
 
   // Needs to be skipped on kovan, unclear why.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
+  skipIfNotLocal(it)(
     'Enqueue: `block.number` and `block.timestamp` have L1 values',
     async () => {
       for (let i = 0; i < 5; i++) {
@@ -99,7 +99,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   )
 
   // Needs to be skipped on kovan, unclear why.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
+  skipIfNotLocal(it)(
     'should set correct OVM Context for `eth_call`',
     async () => {
       const tip = await L2Provider.getBlockWithTransactions('latest')

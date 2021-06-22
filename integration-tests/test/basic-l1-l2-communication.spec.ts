@@ -10,7 +10,7 @@ import l1SimpleStorageJson from '../artifacts/contracts/SimpleStorage.sol/Simple
 import l2SimpleStorageJson from '../artifacts-ovm/contracts/SimpleStorage.sol/SimpleStorage.json'
 import l2ReverterJson from '../artifacts-ovm/contracts/Reverter.sol/Reverter.json'
 import { OptimismEnv } from './shared/env'
-import { L2_NETWORK_NAME } from './shared/utils'
+import { skipIfNotLocal } from './shared/utils'
 
 describe('Basic L1<>L2 Communication', async () => {
   let Factory__L1SimpleStorage: ContractFactory
@@ -50,7 +50,7 @@ describe('Basic L1<>L2 Communication', async () => {
   })
 
   // Needs to be skipped on Kovan because withdrawals take too long.
-  ;(L2_NETWORK_NAME === 'local' ? describe : describe.skip)('L2 => L1', () => {
+  skipIfNotLocal(describe)('L2 => L1', () => {
     it('should be able to perform a withdrawal from L2 -> L1', async () => {
       const value = `0x${'77'.repeat(32)}`
 

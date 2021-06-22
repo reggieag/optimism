@@ -8,7 +8,7 @@ import { TxGasLimit, TxGasPrice } from '@eth-optimism/core-utils'
 import { predeploys, getContractInterface } from '@eth-optimism/contracts'
 
 /* Imports: Internal */
-import { L2_NETWORK_NAME } from './shared/utils'
+import { skipIfNotLocal } from './shared/utils'
 import { OptimismEnv } from './shared/env'
 import { Direction } from './shared/watcher-utils'
 
@@ -85,7 +85,7 @@ describe('Fee Payment Integration Tests', async () => {
 
   // Needs to be skipped on Kovan because the user needs to send a bunch of ETH to the
   // l1 fee wallet in order for the withdrawal to execute correctly.
-  ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
+  skipIfNotLocal(it)(
     'should be able to withdraw fees back to L1 once the minimum is met',
     async () => {
       const l1FeeWallet = await ovmSequencerFeeVault.l1FeeWallet()

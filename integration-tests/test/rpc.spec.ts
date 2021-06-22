@@ -2,7 +2,6 @@ import {
   injectL2Context,
   TxGasLimit,
   TxGasPrice,
-  toRpcHexString,
 } from '@eth-optimism/core-utils'
 import { Wallet, BigNumber, Contract, ContractFactory } from 'ethers'
 import { ethers } from 'hardhat'
@@ -14,7 +13,7 @@ import {
   fundUser,
   expectApprox,
   L2_CHAINID,
-  L2_NETWORK_NAME,
+  skipIfNotLocal,
 } from './shared/utils'
 import chaiAsPromised from 'chai-as-promised'
 import { OptimismEnv } from './shared/env'
@@ -322,7 +321,7 @@ describe('Basic RPC tests', () => {
     // the latest block again and then asserts that they are the same.
     // Needs to be skipped on Kovan because this test doesn't work when other people are sending
     // transactions to the Sequencer at the same time as this test is running.
-    ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
+    skipIfNotLocal(it)(
       'should return the same result when new transactions are not applied',
       async () => {
         // Get latest block once to start.
