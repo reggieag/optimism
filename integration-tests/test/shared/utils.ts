@@ -37,6 +37,8 @@ const env = cleanEnv(process.env, {
   ADDRESS_MANAGER: str({
     default: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
   }),
+  L2_CHAINID: num({ default: 420 }),
+  L2_NETWORK_NAME: str({ default: 'local' }),
 })
 
 // The hardhat instance
@@ -63,6 +65,9 @@ export const l2Wallet = l1Wallet.connect(l2Provider)
 export const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS =
   '0x4200000000000000000000000000000000000004'
 export const OVM_ETH_ADDRESS = predeploys.OVM_ETH
+
+export const L2_CHAINID = env.L2_CHAINID
+export const L2_NETWORK_NAME = env.L2_NETWORK_NAME
 
 export const getAddressManager = (provider: any) => {
   return getContractFactory('Lib_AddressManager')

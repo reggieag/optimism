@@ -13,6 +13,8 @@ import {
   DEFAULT_TRANSACTION,
   fundUser,
   expectApprox,
+  L2_CHAINID,
+  L2_NETWORK_NAME,
 } from './shared/utils'
 import chaiAsPromised from 'chai-as-promised'
 import { OptimismEnv } from './shared/env'
@@ -318,18 +320,22 @@ describe('Basic RPC tests', () => {
     // canonical transaction chain. This test catches this by
     // querying for the latest block and then waits and then queries
     // the latest block again and then asserts that they are the same.
-    // SKIP: FAILS IF OTHER TXS ARE BEING APPLIED BY ANOTHER PROCESS
-    it.skip('should return the same result when new transactions are not applied', async () => {
-      // Get latest block once to start.
-      const prev = await provider.getBlockWithTransactions('latest')
+    // Needs to be skipped on Kovan because this test doesn't work when other people are sending
+    // transactions to the Sequencer at the same time as this test is running.
+    ;(L2_NETWORK_NAME === 'local' ? it : it.skip)(
+      'should return the same result when new transactions are not applied',
+      async () => {
+        // Get latest block once to start.
+        const prev = await provider.getBlockWithTransactions('latest')
 
-      // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
-      for (let i = 0; i < 5; i++) {
-        const latest = await provider.getBlockWithTransactions('latest')
-        expect(latest).to.deep.equal(prev)
-        await sleep(2000)
+        // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
+        for (let i = 0; i < 5; i++) {
+          const latest = await provider.getBlockWithTransactions('latest')
+          expect(latest).to.deep.equal(prev)
+          await sleep(2000)
+        }
       }
-    })
+    )
   })
 
   describe('eth_getBalance', () => {
@@ -343,7 +349,7 @@ describe('Basic RPC tests', () => {
   describe('eth_chainId', () => {
     it('should get the correct chainid', async () => {
       const { chainId } = await provider.getNetwork()
-      expect(chainId).to.be.eq(69)
+      expect(chainId).to.be.eq(L2_CHAINID)
     })
   })
 
