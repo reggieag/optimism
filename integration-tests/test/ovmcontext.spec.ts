@@ -24,27 +24,22 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   before(async () => {
     env = await OptimismEnv.new()
 
-    // Create providers and signers
-    const l2Wallet = env.l2Wallet
-
-    // deploy the contract
     const OVMContextStorageFactory = await ethers.getContractFactory(
       'OVMContextStorage',
-      l2Wallet
+      env.l2Wallet
+    )
+    const OVMMulticallFactory = await ethers.getContractFactory(
+      'OVMMulticall',
+      env.l2Wallet
     )
 
     OVMContextStorage = await OVMContextStorageFactory.deploy()
-
-    const OVMMulticallFactory = await ethers.getContractFactory(
-      'OVMMulticall',
-      l2Wallet
-    )
-
+    await OVMContextStorage.deployTransaction.wait()
     OVMMulticall = await OVMMulticallFactory.deploy()
     await OVMMulticall.deployTransaction.wait()
   })
 
-  it('Enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
+  it('enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
     const tx = await env.l1Messenger.sendMessage(
       OVMContextStorage.address,
       '0x',
