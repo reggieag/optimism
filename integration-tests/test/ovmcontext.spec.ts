@@ -66,40 +66,28 @@ describe('OVM Context: Layer 2 EVM Context', () => {
     expect(block.timestamp).to.deep.equal(timestamp.toNumber())
   })
 
-  it('should set correct OVM Context for `eth_call`', async function() {
-    if (IS_PROD_NETWORK) {
-      // Needs to be skipped on prod networks, unclear why. Seems related to `blockTag: i` below.
-      this.skip()
-    }
-
-    const tip = await L2Provider.getBlockWithTransactions('latest')
-    const start = Math.max(0, tip.number - 5)
-
-    for (let i = start; i < tip.number; i++) {
-      const block = await L2Provider.getBlockWithTransactions(i)
-      const [, returnData] = await OVMMulticall.callStatic.aggregate(
+  it('should set correct OVM Context for `eth_call`', async () => {
+    const block = await L2Provider.getBlockWithTransactions('latest')
+    const [, returnData] = await OVMMulticall.callStatic.aggregate(
+      [
         [
-          [
-            OVMMulticall.address,
-            OVMMulticall.interface.encodeFunctionData(
-              'getCurrentBlockTimestamp'
-            ),
-          ],
-          [
-            OVMMulticall.address,
-            OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber'),
-          ],
+          OVMMulticall.address,
+          OVMMulticall.interface.encodeFunctionData('getCurrentBlockTimestamp'),
         ],
-        { blockTag: i }
-      )
+        [
+          OVMMulticall.address,
+          OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber'),
+        ],
+      ],
+      { blockTag: block.number }
+    )
 
-      const timestamp = BigNumber.from(returnData[0])
-      const blockNumber = BigNumber.from(returnData[1])
-      const tx = block.transactions[0] as any
+    const timestamp = BigNumber.from(returnData[0])
+    const blockNumber = BigNumber.from(returnData[1])
+    const tx = block.transactions[0] as any
 
-      expect(tx.l1BlockNumber).to.deep.equal(blockNumber.toNumber())
-      expect(block.timestamp).to.deep.equal(timestamp.toNumber())
-    }
+    expect(tx.l1BlockNumber).to.deep.equal(blockNumber.toNumber())
+    expect(block.timestamp).to.deep.equal(timestamp.toNumber())
   })
 
   /**
