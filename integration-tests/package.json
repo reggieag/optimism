@@ -20,6 +20,7 @@
     "@eth-optimism/contracts": "^0.4.0",
     "@eth-optimism/core-utils": "^0.4.6",
     "@eth-optimism/hardhat-ovm": "^0.2.2",
+    "@eth-optimism/message-relayer": "^0.1.6",
     "@ethersproject/providers": "^5.0.24",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -50,8 +51,5 @@
     "mocha": "^8.3.1",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.4"
-  },
-  "dependencies": {
-    "@eth-optimism/message-relayer": "^0.1.6"
   }
 }
