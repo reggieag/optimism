@@ -178,8 +178,9 @@ export const useDynamicTimeoutForWithdrawals = async (
   const challengePeriod = await env.scc.FRAUD_PROOF_WINDOW()
   if (challengePeriod.gt(60)) {
     console.log(
-      `WARNING: challenge period is greater than 60s: ${challengePeriod.toString()}s`
+      `WARNING: challenge period is greater than 60s (${challengePeriod.toString()}s), skipping test`
     )
+    testctx.skip()
   }
 
   // 60s for state root batch to be published + (challenge period x 4)
