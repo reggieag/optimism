@@ -16,14 +16,15 @@ import { Direction } from './shared/watcher-utils'
  * must be equal to the blocknumber/timestamp of the L1 transaction.
  */
 describe('OVM Context: Layer 2 EVM Context', () => {
-  let OVMMulticall: Contract
-  let OVMContextStorage: Contract
-
   const L2Provider = injectL2Context(l2Provider)
   let env: OptimismEnv
   before(async () => {
     env = await OptimismEnv.new()
+  })
 
+  let OVMMulticall: Contract
+  let OVMContextStorage: Contract
+  beforeEach(async () => {
     const OVMContextStorageFactory = await ethers.getContractFactory(
       'OVMContextStorage',
       env.l2Wallet
@@ -39,55 +40,74 @@ describe('OVM Context: Layer 2 EVM Context', () => {
     await OVMMulticall.deployTransaction.wait()
   })
 
+  let numTxs = 5
+  if (IS_PROD_NETWORK) {
+    // Tests take way too long if we don't reduce the number of txs here.
+    numTxs = 1
+  }
+
   it('enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
-    const tx = await env.l1Messenger.sendMessage(
-      OVMContextStorage.address,
-      '0x',
-      2_000_000
-    )
-    const receipt = await tx.wait()
+    for (let i = 0; i < numTxs; i++) {
+      const tx = await env.l1Messenger.sendMessage(
+        OVMContextStorage.address,
+        '0x',
+        2_000_000
+      )
+      const receipt = await tx.wait()
 
-    // Get the receipt
-    // The transaction did not revert
-    expect(receipt.status).to.equal(1)
+      // Get the receipt
+      // The transaction did not revert
+      expect(receipt.status).to.equal(1)
 
-    await env.waitForXDomainTransaction(tx, Direction.L1ToL2)
+      await env.waitForXDomainTransaction(tx, Direction.L1ToL2)
 
-    // Get the L1 block that the enqueue transaction was in so that
-    // the timestamp can be compared against the layer two contract
-    const block = await l1Provider.getBlock(receipt.blockNumber)
+      // Get the L1 block that the enqueue transaction was in so that
+      // the timestamp can be compared against the layer two contract
+      const block = await l1Provider.getBlock(receipt.blockNumber)
 
-    // The contact is a fallback function that keeps `block.number`
-    // and `block.timestamp` in a mapping based on an index that
-    // increments each time that there is a transaction.
-    const blockNumber = await OVMContextStorage.blockNumbers(0)
-    expect(receipt.blockNumber).to.deep.equal(blockNumber.toNumber())
-    const timestamp = await OVMContextStorage.timestamps(0)
-    expect(block.timestamp).to.deep.equal(timestamp.toNumber())
+      // The contact is a fallback function that keeps `block.number`
+      // and `block.timestamp` in a mapping based on an index that
+      // increments each time that there is a transaction.
+      const blockNumber = await OVMContextStorage.blockNumbers(i)
+      expect(receipt.blockNumber).to.deep.equal(blockNumber.toNumber())
+      const timestamp = await OVMContextStorage.timestamps(i)
+      expect(block.timestamp).to.deep.equal(timestamp.toNumber())
+    }
   })
 
   it('should set correct OVM Context for `eth_call`', async () => {
-    const block = await L2Provider.getBlockWithTransactions('latest')
-    const [, returnData] = await OVMMulticall.callStatic.aggregate(
-      [
-        [
-          OVMMulticall.address,
-          OVMMulticall.interface.encodeFunctionData('getCurrentBlockTimestamp'),
-        ],
-        [
-          OVMMulticall.address,
-          OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber'),
-        ],
-      ],
-      { blockTag: block.number }
-    )
+    for (let i = 0; i < numTxs; i++) {
+      // Make an empty transaction to bump the latest block number.
+      const dummyTx = await env.l2Wallet.sendTransaction({
+        to: `0x${'11'.repeat(20)}`,
+        data: '0x',
+      })
+      await dummyTx.wait()
 
-    const timestamp = BigNumber.from(returnData[0])
-    const blockNumber = BigNumber.from(returnData[1])
-    const tx = block.transactions[0] as any
+      const block = await L2Provider.getBlockWithTransactions('latest')
+      const [, returnData] = await OVMMulticall.callStatic.aggregate(
+        [
+          [
+            OVMMulticall.address,
+            OVMMulticall.interface.encodeFunctionData(
+              'getCurrentBlockTimestamp'
+            ),
+          ],
+          [
+            OVMMulticall.address,
+            OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber'),
+          ],
+        ],
+        { blockTag: block.number }
+      )
 
-    expect(tx.l1BlockNumber).to.deep.equal(blockNumber.toNumber())
-    expect(block.timestamp).to.deep.equal(timestamp.toNumber())
+      const timestamp = BigNumber.from(returnData[0])
+      const blockNumber = BigNumber.from(returnData[1])
+      const tx = block.transactions[0] as any
+
+      expect(tx.l1BlockNumber).to.deep.equal(blockNumber.toNumber())
+      expect(block.timestamp).to.deep.equal(timestamp.toNumber())
+    }
   })
 
   /**
