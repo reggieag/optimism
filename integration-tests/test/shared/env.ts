@@ -158,6 +158,10 @@ export class OptimismEnv {
         } catch (err) {
           if (err.message.includes('execution failed due to an exception')) {
             await sleep(5000)
+          } else if (
+            err.message.includes('message has already been received')
+          ) {
+            break
           } else {
             throw err
           }
