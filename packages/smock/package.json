@@ -57,6 +57,7 @@
     "ethers": "^5.0.31",
     "hardhat": "^2.4.0",
     "lodash": "^4.17.20",
-    "prettier": "^2.2.1"
+    "prettier": "^2.2.1",
+    "typescript": "^4.2.3"
   }
 }
