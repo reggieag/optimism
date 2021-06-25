@@ -1,5 +1,9 @@
 package rollup
 
+import (
+	"errors"
+)
+
 type GetLatestBlockNumberFn func() (uint64, error)
 type UpdateL2GasPriceFn func(float64) error
 
@@ -19,7 +23,16 @@ func NewGasPriceUpdater(
 	epochLengthSeconds uint64,
 	getLatestBlockNumberFn GetLatestBlockNumberFn,
 	updateL2GasPriceFn UpdateL2GasPriceFn,
-) *GasPriceUpdater {
+) (*GasPriceUpdater, error) {
+	if epochStartBlockNumber < 0 {
+		return nil, errors.New("epochStartBlockNumber must be non-negative.")
+	}
+	if averageBlockGasLimit < 1 {
+		return nil, errors.New("averageBlockGasLimit cannot be less than 1 gas.")
+	}
+	if epochLengthSeconds < 1 {
+		return nil, errors.New("epochLengthSeconds cannot be less than 1 second.")
+	}
 	return &GasPriceUpdater{
 		gasPricer:              *gasPricer,
 		epochStartBlockNumber:  epochStartBlockNumber,
@@ -27,7 +40,7 @@ func NewGasPriceUpdater(
 		averageBlockGasLimit:   averageBlockGasLimit,
 		getLatestBlockNumberFn: getLatestBlockNumberFn,
 		updateL2GasPriceFn:     updateL2GasPriceFn,
-	}
+	}, nil
 }
 
 func (g *GasPriceUpdater) UpdateGasPrice() error {
@@ -35,8 +48,18 @@ func (g *GasPriceUpdater) UpdateGasPrice() error {
 	if err != nil {
 		return err
 	}
+	if latestBlockNumber < g.epochStartBlockNumber {
+		return errors.New("Latest block number less than the last epoch's block number.")
+	}
 	averageGasPerSecond := float64((latestBlockNumber - g.epochStartBlockNumber) * g.averageBlockGasLimit / g.epochLengthSeconds)
-	g.gasPricer.CompleteEpoch(averageGasPerSecond)
+	_, err = g.gasPricer.CompleteEpoch(averageGasPerSecond)
+	if err != nil {
+		return err
+	}
 	g.epochStartBlockNumber = latestBlockNumber
-	return g.updateL2GasPriceFn(g.gasPricer.curPrice)
+	err = g.updateL2GasPriceFn(g.gasPricer.curPrice)
+	if err != nil {
+		return err
+	}
+	return nil
 }

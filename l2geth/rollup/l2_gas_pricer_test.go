@@ -17,7 +17,8 @@ func returnConstFn(retVal float64) func() float64 {
 
 func runCalcGasPriceTests(gp L2GasPricer, tcs []CalcGasPriceTestCase, t *testing.T) {
 	for _, tc := range tcs {
-		if tc.expectedNextGasPrice != gp.CalcNextEpochGasPrice(tc.avgGasPerSecondLastEpoch) {
+		nextEpochGasPrice, err := gp.CalcNextEpochGasPrice(tc.avgGasPerSecondLastEpoch)
+		if tc.expectedNextGasPrice != nextEpochGasPrice || err != nil {
 			t.Fatalf("failed on test: %s", tc.name)
 		}
 	}

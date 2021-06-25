@@ -11,15 +11,18 @@ type MockEpoch struct {
 
 // WIP
 func TestUsageOfGasPriceUpdater(t *testing.T) {
-	gasPerSecond := 3300000.0
-	getGasTarget := func() float64 { return gasPerSecond }
+	gpsTarget := 3300000.0
+	getGasTarget := func() float64 { return gpsTarget }
 	epochLengthSeconds := 10.0
 	averageBlockGasLimit := 11000000.0
 	// Based on our 10 second epoch, we are targetting this number of blocks per second
-	numBlocksToTarget := (epochLengthSeconds * gasPerSecond) / averageBlockGasLimit
+	numBlocksToTarget := (epochLengthSeconds * gpsTarget) / averageBlockGasLimit
 	fmt.Println("Number of target blocks: ", numBlocksToTarget)
 
-	gasPricer := NewGasPricer(1, 1, getGasTarget, 10)
+	gasPricer, err := NewGasPricer(1, 1, getGasTarget, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	curBlock := uint64(10)
 	getLatestBlockNumber := func() (uint64, error) { return curBlock, nil }
@@ -30,7 +33,10 @@ func TestUsageOfGasPriceUpdater(t *testing.T) {
 
 	// Example loop usage
 	startBlock, _ := getLatestBlockNumber()
-	gasUpdater := NewGasPriceUpdater(gasPricer, startBlock, 11000000, 10, getLatestBlockNumber, updateL2GasPrice)
+	gasUpdater, err := NewGasPriceUpdater(gasPricer, startBlock, 11000000, 10, getLatestBlockNumber, updateL2GasPrice)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// In these mock epochs the gas price shold go up and then down again after the time has passed
 	mockEpochs := []MockEpoch{
@@ -97,7 +103,10 @@ func TestUsageOfGasPriceUpdater(t *testing.T) {
 	}
 	loop := func(epoch MockEpoch) {
 		curBlock += epoch.numBlocks
-		gasUpdater.UpdateGasPrice()
+		err = gasUpdater.UpdateGasPrice()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	for _, epoch := range mockEpochs {
 		loop(epoch)
