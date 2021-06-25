@@ -1,20 +1,32 @@
 /* Imports: External */
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
-import { decodeRevertReason } from 'hardhat/internal/hardhat-network/stack-traces/revert-reasons'
 import { VmError } from '@nomiclabs/ethereumjs-vm/dist/exceptions'
 import BN from 'bn.js'
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+// Handle hardhat ^2.4.0
+let decodeRevertReason: (value: Buffer) => string
+try {
+  decodeRevertReason = require('hardhat/internal/hardhat-network/stack-traces/revert-reasons')
+    .decodeRevertReason
+} catch (err) {
+  const {
+    ReturnData,
+  } = require('hardhat/internal/hardhat-network/provider/return-data')
+  decodeRevertReason = (value: Buffer) => {
+    return new ReturnData(value).decodeError()
+  }
+}
 // Handle hardhat ^2.2.0
 let TransactionExecutionError: any
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   TransactionExecutionError = require('hardhat/internal/hardhat-network/provider/errors')
     .TransactionExecutionError
 } catch (err) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   TransactionExecutionError = require('hardhat/internal/core/providers/errors')
     .TransactionExecutionError
 }
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 /* Imports: Internal */
 import { MockContract, SmockedVM } from './types'
@@ -65,7 +77,12 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
       return
     }
 
-    const target = fromFancyAddress(message.to)
+    let target: string
+    if (message.delegatecall) {
+      target = fromFancyAddress(message._codeAddress)
+    } else {
+      target = fromFancyAddress(message.to)
+    }
 
     // Check if the target address is a smocked contract.
     if (!(target in vm._smockState.mocks)) {
@@ -105,7 +122,13 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
     // contracts never create new sub-calls (meaning this `afterMessage` event corresponds directly
     // to a `beforeMessage` event emitted during a call to a smock contract).
     const message = vm._smockState.messages.pop()
-    const target = fromFancyAddress(message.to)
+
+    let target: string
+    if (message.delegatecall) {
+      target = fromFancyAddress(message._codeAddress)
+    } else {
+      target = fromFancyAddress(message.to)
+    }
 
     // Not sure if this can ever actually happen? Just being safe.
     if (!(target in vm._smockState.mocks)) {
@@ -182,5 +205,35 @@ export const bindSmock = async (
   await pStateManager.putContractCode(
     toFancyAddress(mock.address),
     Buffer.from('00', 'hex')
+  )
+}
+
+/**
+ * Detaches a smocked contract from a hardhat network provider.
+ *
+ * @param mock Smocked contract to detach to a provider, or an address.
+ * @param provider Hardhat network provider to detatch the contract from.
+ */
+export const unbindSmock = async (
+  mock: MockContract | string,
+  provider: HardhatNetworkProvider
+): Promise<void> => {
+  if (!isSmockInitialized(provider)) {
+    initializeSmock(provider)
+  }
+
+  const vm: SmockedVM = (provider as any)._node._vm
+  const pStateManager = vm.pStateManager || vm.stateManager
+
+  // Add mock to our list of mocks currently attached to the VM.
+  const address = typeof mock === 'string' ? mock : mock.address.toLowerCase()
+  delete vm._smockState.mocks[address]
+
+  // Set the contract code for our mock to 0x00 == STOP. Need some non-empty contract code because
+  // Solidity will sometimes throw if it's calling something without code (I forget the exact
+  // scenario that causes this throw).
+  await pStateManager.putContractCode(
+    toFancyAddress(address),
+    Buffer.from('', 'hex')
   )
 }
